@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model kayttaja {
+  id              String       @id @db.Uuid
+  kayttajatunnus  String
+  salasana        String
+  email           String
+  maa             String?
+  rooli           String       @default("user")
+  profiilikuva    String?
+  rekisteroitynyt DateTime     @default(now())
+  keskustelu      keskustelu[]
+  vastaus         vastaus[]
+}
+
+model keskustelu {
+  id            Int       @id @default(autoincrement())
+  otsikko       String
+  sisalto       String
+  kirjoitettu   DateTime  @default(now())
+  muokattu      DateTime?
+  kirjoittajaid String    @db.Uuid
+  kategoriaid   Int
+  tykkaykset    String[]
+  kategoria     kategoria @relation(fields: [kategoriaid], references: [id], map: "keskustelu_kategoriaId_fkey")
+  kayttaja      kayttaja  @relation(fields: [kirjoittajaid], references: [id], map: "keskustelu_kirjoittajaId_fkey")
+  vastaus       vastaus[]
+}
+
+model vastaus {
+  id            Int        @id @default(autoincrement())
+  sisalto       String
+  kirjoitettu   DateTime   @default(now())
+  muokattu      DateTime?
+  kirjoittajaid String     @db.Uuid
+  keskusteluid  Int
+  tykkaykset    String[]
+  keskustelu    keskustelu @relation(fields: [keskusteluid], references: [id], map: "vastaus_keskusteluId_fkey")
+  kayttaja      kayttaja   @relation(fields: [kirjoittajaid], references: [id], map: "vastaus_kirjoittajaId_fkey")
+}
+
+model kategoria {
+  id         Int          @id @default(autoincrement())
+  nimi       String
+  keskustelu keskustelu[]
+}
